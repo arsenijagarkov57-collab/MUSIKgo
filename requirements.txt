@@ -1,0 +1,11 @@
+# Зависимости музыкального сервиса
+fastapi>=0.115.0          # веб-фреймворк
+uvicorn[standard]>=0.32.0 # ASGI-сервер (в составе: watchfiles для --reload)
+yt-dlp>=2024.12.23        # поиск и скачивание с YouTube / SoundCloud
+mutagen>=1.47.0           # запись ID3-метаданных (название, артист, обложка)
+aiosqlite>=0.20.0         # асинхронная работа с SQLite
+httpx>=0.27.0             # тесты через fastapi.testclient (test_stage2.py)
+
+# Важно: для конвертации аудио в MP3 нужен FFmpeg — системный в PATH
+# или ffmpeg.exe в корне проекта рядом с main.py (имеет приоритет).
+# Установка на Windows through winget:  winget install ffmpeg

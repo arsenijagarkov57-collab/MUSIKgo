@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0e0e0e">
+    <meta name="description" content="Музыкальный сервис — ваша коллекция и поиск треков">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Музыка">
+    <title>Музыка — слушайте любимое</title>
+
+    <!-- PWA: манифест и иконки для установки на главный экран -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: '#0e0e0e',
+                        panel: '#181818',
+                        accent: '#ffcc00',
+                        'accent-soft': '#ffdb4d',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="min-h-screen bg-ink text-white antialiased selection:bg-accent selection:text-black">
+
+<!-- ======================================================================
+     SVG-спрайт иконок. Все иконки статичные: пользовательские данные
+     никогда не попадают в разметку через innerHTML.
+     ====================================================================== -->
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden" aria-hidden="true">
+    <symbol id="i-note" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 3v10.6a4 4 0 1 0 2 3.4V10h6V7h-6V3h-2Z"/>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 10.6 12 3l9 7.6V20a1 1 0 0 1-1 1h-4.5v-6.5h-7V21H4a1 1 0 0 1-1-1v-9.4Z"/>
+    </symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 20.3 4.7 13.1A4.6 4.6 0 0 1 11.2 6.6L12 7.4l.8-.8a4.6 4.6 0 0 1 6.5 6.5L12 20.3Z"/>
+    </symbol>
+    <symbol id="i-heart-fill" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 20.3 4.7 13.1A4.6 4.6 0 0 1 11.2 6.6L12 7.4l.8-.8a4.6 4.6 0 0 1 6.5 6.5L12 20.3Z"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="m16 16 4.5 4.5"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M8 5.2c0-.8.9-1.3 1.6-.9l9.2 6.1a1.9 1.9 0 0 1 0 3.2l-9.2 6.1c-.7.4-1.6-.1-1.6-.9V5.2Z"/>
+    </symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24">
+        <rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/>
+        <rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M6 5h2.2v14H6V5Zm13 .9v12.2c0 .8-.9 1.3-1.6.8L8.5 12.8a1 1 0 0 1 0-1.6L17.4 5.1c.7-.5 1.6 0 1.6.8Z"/>
+    </symbol>
+    <symbol id="i-next" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M15.8 5H18v14h-2.2V5ZM5 5.9v12.2c0 .8.9 1.3 1.6.8l8.9-6.1a1 1 0 0 0 0-1.6L6.6 5.1C5.9 4.6 5 5.1 5 5.9Z"/>
+    </symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M17 3.5h3.5V7M3.5 6h3c4.4 0 5.1 12 9.8 12h4.2M17 20.5h3.5V17M3.5 18h3c1.7 0 2.8-1.7 3.8-3.8M14.3 8.1c.9-1.3 1.9-2.1 3.2-2.1"/>
+    </symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M17 2.5 20.5 6 17 9.5M20.5 6H7a4 4 0 0 0-4 4v1M7 21.5 3.5 18 7 14.5M3.5 18H17a4 4 0 0 0 4-4v-1"/>
+    </symbol>
+    <symbol id="i-repeat-one" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M17 2.5 20.5 6 17 9.5M20.5 6H7a4 4 0 0 0-4 4v1M7 21.5 3.5 18 7 14.5M3.5 18H17a4 4 0 0 0 4-4v-1"/>
+        <text x="12" y="15.5" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor">1</text>
+    </symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M4 9h3.6L12 5v14l-4.4-4H4V9Zm11.6-.9a5.2 5.2 0 0 1 0 7.8l-1.3-1.5a3.2 3.2 0 0 0 0-4.8l1.3-1.5Zm2.5-2.7a8.7 8.7 0 0 1 0 13.2l-1.3-1.5a6.7 6.7 0 0 0 0-10.2l1.3-1.5Z"/>
+    </symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M4 9h3.6L12 5v14l-4.4-4H4V9Zm12.5 3 2.3-2.3-1.4-1.4-2.3 2.3-2.3-2.3-1.4 1.4 2.3 2.3-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3Z"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+    </symbol>
+    <symbol id="i-share" viewBox="0 0 24 24">
+        <circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="m8.4 10.8 7.2-4.2m-7.2 6.6 7.2 4.2"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/>
+    </symbol>
+    <symbol id="i-disc" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path fill="none" stroke="currentColor" stroke-width="1.2" d="M5.4 7.5a8.5 8.5 0 0 1 13.2 0"/>
+    </symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="M2 12h2.5l2-6 3.2 12 3.4-14 3 16 2.4-8H22"/>
+    </symbol>
+    <symbol id="i-list" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M9 6h11M9 12h11M9 18h11"/>
+        <circle cx="4.5" cy="6" r="1.3" fill="currentColor"/>
+        <circle cx="4.5" cy="12" r="1.3" fill="currentColor"/>
+        <circle cx="4.5" cy="18" r="1.3" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-list-plus" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8 6h12M8 12h8M8 18h5M3 16v5m-2.5-2.5h5"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V4.5h6V7M6 7l1 13h10l1-13M10 11v5m4-5v5"/>
+    </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24">
+        <rect x="9" y="2.8" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21m-3.5 0h7"/>
+    </symbol>
+</svg>
+
+<div class="flex min-h-screen">
+
+    <!-- ==================================================================
+         Боковое меню (десктоп)
+         ================================================================== -->
+    <aside class="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col border-r border-white/5 bg-panel px-4 py-6">
+        <div class="flex items-center gap-3 px-2 mb-9">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent-soft to-[#ff9d00] grid place-items-center shadow-lg shadow-accent/10">
+                <svg class="w-6 h-6 text-black" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-note"></use></svg>
+            </div>
+            <div>
+                <p class="text-lg font-extrabold tracking-tight leading-none">Музыка</p>
+                <p class="text-[11px] text-white/35 mt-1">ваш личный плейлист</p>
+            </div>
+        </div>
+
+        <nav class="space-y-1" aria-label="Основная навигация">
+            <button type="button" data-action="view" data-view="home" class="nav-item active w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold">
+                <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-home"></use></svg>
+                <span>Главная</span>
+            </button>
+            <button type="button" data-action="view" data-view="likes" class="nav-item w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold">
+                <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"></use></svg>
+                <span>Моя коллекция</span>
+            </button>
+            <button type="button" data-action="view" data-view="search" class="nav-item w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold">
+                <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"></use></svg>
+                <span>Поиск</span>
+            </button>
+        </nav>
+
+        <!-- Установка приложения (PWA / APK) -->
+        <button type="button" data-action="open-install"
+                class="install-side-btn mt-5 w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-extrabold text-black">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-download"></use></svg>
+            <span>Скачать приложение</span>
+        </button>
+
+        <!-- Плейлисты пользователя -->
+        <div class="mt-7 min-h-0 flex flex-col">
+            <div class="flex items-center justify-between px-2 mb-2">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30">Плейлисты</p>
+                <button type="button" data-action="create-playlist" aria-label="Создать плейлист"
+                        class="w-7 h-7 grid place-items-center rounded-lg text-white/45 hover:text-accent hover:bg-white/5 transition-colors"
+                        title="Создать плейлист">
+                    <span class="text-lg leading-none">+</span>
+                </button>
+            </div>
+            <div id="playlistNav" class="space-y-0.5 overflow-y-auto max-h-[32vh] pr-1"></div>
+        </div>
+
+        <div class="mt-auto px-1">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a2f00] via-[#242014] to-[#1f1f1f] p-4">
+                <div class="absolute -right-6 -top-8 w-24 h-24 rounded-full bg-accent/10 blur-2xl"></div>
+                <svg class="w-6 h-6 text-accent mb-3" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-note"></use></svg>
+                <p class="text-sm font-bold">Музыка всегда рядом</p>
+                <p class="text-xs text-white/45 mt-1 leading-relaxed">Скачивайте треки и слушайте их даже без сети.</p>
+            </div>
+            <p class="text-[11px] text-white/20 mt-5 px-2">Локальный музыкальный сервис</p>
+        </div>
+    </aside>
+
+    <!-- ==================================================================
+         Основной контент
+         ================================================================== -->
+    <main class="w-full min-h-screen lg:ml-64 pb-36 lg:pb-28">
+
+        <!-- Верхняя панель с поиском (всегда доступна) -->
+        <header class="sticky top-0 z-20 border-b border-white/5 bg-ink/85 backdrop-blur-xl">
+            <div class="max-w-[1400px] mx-auto px-4 md:px-8 h-[72px] flex items-center gap-4">
+                <div class="lg:hidden w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-accent-soft to-[#ff9d00] grid place-items-center">
+                    <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-note"></use></svg>
+                </div>
+                <div class="relative flex-1 max-w-2xl">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/35 pointer-events-none" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"></use></svg>
+                    <input id="searchInput" type="text" inputmode="search" autocomplete="off" spellcheck="false"
+                           placeholder="Найти трек или исполнителя в библиотеке и в сети…"
+                           aria-label="Поиск треков"
+                           class="w-full h-11 md:h-12 rounded-2xl bg-[#1c1c1c] border border-white/5 pl-12 pr-12 text-sm placeholder-white/30 focus:outline-none focus:border-accent/50 focus:bg-[#202020] transition-colors">
+                    <button id="clearSearch" type="button" data-action="clear-search" aria-label="Очистить поиск"
+                            class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 grid place-items-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+                    </button>
+                </div>
+                <button type="button" data-action="open-install" aria-label="Скачать приложение"
+                        class="install-mobile-btn shrink-0 h-11 md:h-12 lg:hidden flex items-center gap-2 rounded-2xl px-3 text-xs font-extrabold">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-download"></use></svg>
+                    <span class="hidden sm:inline">Скачать приложение</span>
+                </button>
+                <div class="hidden md:flex items-center gap-2 text-xs text-white/25 ml-auto">
+                    <kbd class="px-2 py-1 rounded-md border border-white/10 bg-white/5">Space</kbd>
+                    <span>пауза</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-[1400px] mx-auto px-4 md:px-8 pt-7 md:pt-9">
+
+            <!-- ---------- Главная ---------- -->
+            <section id="view-home" data-view-panel="home">
+                <div class="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-[#3d3100] via-[#1d1b14] to-[#181818] px-6 py-8 md:px-10 md:py-12 mb-10">
+                    <div class="pointer-events-none absolute -right-16 -top-24 w-72 h-72 rounded-full bg-accent/10 blur-3xl"></div>
+                    <div class="pointer-events-none absolute right-24 bottom-[-6rem] w-56 h-56 rounded-full bg-[#ff8a00]/10 blur-3xl"></div>
+                    <div class="relative max-w-xl">
+                        <p class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-accent mb-4">
+                            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span> Ваша музыка
+                        </p>
+                        <h1 class="text-3xl md:text-5xl font-black leading-[1.1] tracking-tight">Слушайте то,<br>что любите</h1>
+                        <p class="mt-4 text-sm md:text-base text-white/50 leading-relaxed">Все скачанные треки в одном месте. Найдите новое в поиске и добавьте в коллекцию — всё сохранится локально.</p>
+                        <div class="mt-7 flex flex-wrap items-center gap-3">
+                            <button id="heroPlay" type="button" data-action="hero-play"
+                                    class="inline-flex items-center gap-2.5 rounded-full bg-accent px-6 py-3 text-sm font-bold text-black hover:bg-accent-soft active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"></use></svg>
+                                <span>Слушать все</span>
+                            </button>
+                            <button id="heroWave" type="button" data-action="wave" aria-pressed="false"
+                                    class="wave-btn inline-flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-bold text-black">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"></use></svg>
+                                <span>Моя волна</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-end justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold tracking-tight">Все треки</h2>
+                        <p class="text-xs text-white/35 mt-1">Скачано и готово к прослушиванию</p>
+                    </div>
+                    <span id="homeCount" class="shrink-0 text-xs text-white/35 bg-white/5 rounded-full px-3 py-1.5 tabular-nums">0 треков</span>
+                </div>
+                <div id="homeTracks" class="space-y-1"></div>
+                <div id="homeEmpty" class="hidden flex-col items-center text-center py-16 rounded-2xl border border-dashed border-white/10">
+                    <svg class="w-12 h-12 text-white/15 mb-4" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-disc"></use></svg>
+                    <p class="font-semibold">Пока нет скачанных треков</p>
+                    <p class="text-sm text-white/35 mt-1">Введите название в строке поиска выше — мы найдём и скачаем трек.</p>
+                </div>
+            </section>
+
+            <!-- ---------- Моя коллекция ---------- -->
+            <section id="view-likes" data-view-panel="likes" class="hidden">
+                <div class="mb-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-accent mb-3">Избранное</p>
+                    <h2 class="text-3xl md:text-4xl font-black tracking-tight">Моя коллекция</h2>
+                    <p class="text-sm text-white/40 mt-2">Треки, которые вы отметили сердечком</p>
+                </div>
+                <div class="flex items-end justify-between gap-4 mb-4">
+                    <h3 class="text-lg font-bold">Любимые треки</h3>
+                    <span id="likesCount" class="shrink-0 text-xs text-white/35 bg-white/5 rounded-full px-3 py-1.5 tabular-nums">0 треков</span>
+                </div>
+                <div id="likesTracks" class="space-y-1"></div>
+                <div id="likesEmpty" class="hidden flex-col items-center text-center py-16 rounded-2xl border border-dashed border-white/10">
+                    <svg class="w-12 h-12 text-accent/25 mb-4" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"></use></svg>
+                    <p class="font-semibold">Здесь пока пусто</p>
+                    <p class="text-sm text-white/35 mt-1">Нажмите на сердечко рядом с треком, чтобы добавить его в коллекцию.</p>
+                </div>
+            </section>
+
+            <!-- ---------- Плейлист ---------- -->
+            <section id="view-playlist" data-view-panel="playlist" class="hidden">
+                <div class="mb-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-accent mb-3">Плейлист</p>
+                    <h2 id="playlistTitle" class="text-3xl md:text-4xl font-black tracking-tight">Плейлист</h2>
+                    <p class="text-sm text-white/40 mt-2">Треки, которые вы собрали вместе</p>
+                </div>
+                <div class="flex items-end justify-between gap-4 mb-4">
+                    <h3 class="text-lg font-bold">Композиции</h3>
+                    <span id="playlistCount" class="shrink-0 text-xs text-white/35 bg-white/5 rounded-full px-3 py-1.5 tabular-nums">0 треков</span>
+                </div>
+                <div id="playlistTracks" class="space-y-1"></div>
+                <div id="playlistEmpty" class="hidden flex-col items-center text-center py-16 rounded-2xl border border-dashed border-white/10">
+                    <svg class="w-12 h-12 text-accent/25 mb-4" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-list"></use></svg>
+                    <p class="font-semibold">В плейлисте пока пусто</p>
+                    <p class="text-sm text-white/35 mt-1">Нажмите на значок «+» у любого трека, чтобы добавить его сюда.</p>
+                </div>
+            </section>
+
+            <!-- ---------- Поиск ---------- -->
+            <section id="view-search" data-view-panel="search" class="hidden">
+                <div class="mb-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-accent mb-3">Поиск</p>
+                    <h2 class="text-3xl md:text-4xl font-black tracking-tight">Найти музыку</h2>
+                    <p class="text-sm text-white/40 mt-2">Сначала ищем в вашей библиотеке, затем — в сети</p>
+                </div>
+
+                <div id="searchIdle" class="flex flex-col items-center text-center py-20 rounded-3xl border border-dashed border-white/10 bg-white/[0.02]">
+                    <div class="w-16 h-16 rounded-3xl bg-accent/10 grid place-items-center mb-5">
+                        <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"></use></svg>
+                    </div>
+                    <p class="font-semibold text-lg">Что будем слушать?</p>
+                    <p class="text-sm text-white/35 mt-2 max-w-sm">Введите название трека или исполнителя в строке выше. Результаты появятся здесь автоматически.</p>
+                </div>
+
+                <div id="searchResults" class="hidden space-y-10">
+                    <div id="searchLocalSection" class="hidden">
+                        <div class="flex items-end justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold">В вашей библиотеке</h3>
+                                <p class="text-xs text-white/35 mt-1">Мгновенный поиск по скачанным трекам</p>
+                            </div>
+                            <span id="localCount" class="shrink-0 text-xs text-white/35 bg-white/5 rounded-full px-3 py-1.5 tabular-nums">0</span>
+                        </div>
+                        <div id="searchLocal" class="space-y-1"></div>
+                    </div>
+
+                    <div id="searchRemoteSection">
+                        <div class="flex items-end justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold">Найдено в сети</h3>
+                                <p class="text-xs text-white/35 mt-1">Нажмите на трек, чтобы скачать и сразу слушать</p>
+                            </div>
+                            <span id="remoteHint" class="hidden shrink-0 text-[11px] text-white/30 md:block">YouTube · SoundCloud</span>
+                        </div>
+                        <div id="searchRemote" class="space-y-1"></div>
+                        <p id="remoteError" class="hidden text-sm text-red-300/80 mt-3"></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================================================
+     Нижняя навигация (мобильные экраны) — над плеером
+     ====================================================================== -->
+<nav class="lg:hidden fixed inset-x-0 bottom-[72px] z-30 border-t border-white/5 bg-panel/95 backdrop-blur-xl" aria-label="Мобильная навигация">
+    <div class="grid grid-cols-4 h-14">
+        <button type="button" data-action="view" data-view="home" class="nav-item active flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-home"></use></svg>
+            <span class="text-[10px] font-semibold">Главная</span>
+        </button>
+        <button type="button" data-action="view" data-view="likes" class="nav-item flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"></use></svg>
+            <span class="text-[10px] font-semibold">Коллекция</span>
+        </button>
+        <button type="button" data-action="view" data-view="search" class="nav-item flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"></use></svg>
+            <span class="text-[10px] font-semibold">Поиск</span>
+        </button>
+        <button type="button" data-action="mobile-playlists" class="nav-item flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 nav-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-list"></use></svg>
+            <span class="text-[10px] font-semibold">Плейлисты</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ======================================================================
+     Мобильный ящик с плейлистами
+     ====================================================================== -->
+<div id="mobilePlaylistOverlay" class="hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" data-action="close-mobile-playlists"></div>
+<aside id="mobilePlaylistDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-[min(88vw,340px)] flex flex-col border-l border-white/10 bg-panel px-4 py-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-6 px-1">
+        <div>
+            <p class="text-lg font-extrabold tracking-tight">Плейлисты</p>
+            <p class="text-[11px] text-white/35 mt-0.5">ваши подборки</p>
+        </div>
+        <button type="button" data-action="close-mobile-playlists" aria-label="Закрыть"
+                class="w-9 h-9 grid place-items-center rounded-full text-white/45 hover:text-white hover:bg-white/5 transition-colors">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+    </div>
+    <button type="button" data-action="create-playlist"
+            class="w-full mb-4 flex items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm font-bold text-accent hover:bg-accent/20 transition-colors">
+        <span class="text-lg leading-none">+</span> Создать плейлист
+    </button>
+    <div id="mobilePlaylistNav" class="flex-1 space-y-0.5 overflow-y-auto"></div>
+</aside>
+
+<!-- ======================================================================
+     Панель текста песни (караоке)
+     ====================================================================== -->
+<div id="lyricsPanel" class="hidden fixed inset-x-0 bottom-[128px] lg:bottom-[88px] z-40 h-[46vh] max-h-[520px] border-y border-white/10 bg-panel/97 backdrop-blur-2xl">
+    <div class="h-full max-w-[900px] mx-auto flex flex-col px-5 py-4 md:px-8">
+        <div class="flex items-center gap-3 shrink-0 pb-3 border-b border-white/5">
+            <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mic"></use></svg>
+            <div class="min-w-0 flex-1">
+                <p id="lyricsTitle" class="truncate text-sm font-bold">Текст песни</p>
+                <p class="text-[11px] text-white/35">Строки подсвечиваются по времени воспроизведения</p>
+            </div>
+            <button type="button" data-action="close-lyrics" aria-label="Закрыть текст"
+                    class="w-9 h-9 grid place-items-center rounded-full text-white/45 hover:text-white hover:bg-white/5 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+            </button>
+        </div>
+        <div id="lyricsBody" class="flex-1 min-h-0 overflow-y-auto py-5 text-center"></div>
+    </div>
+</div>
+
+<!-- ======================================================================
+     Нижний аудиоплеер
+     ====================================================================== -->
+<div id="player" class="fixed inset-x-0 bottom-0 z-40 h-[72px] lg:h-[88px] border-t border-white/10 bg-panel/95 backdrop-blur-2xl">
+    <!-- Тонкая полоса прогресса на мобильных -->
+    <input id="progressMobile" type="range" min="0" max="1" value="0" step="0.1"
+           aria-label="Перемотка трека"
+           class="range range-thin absolute -top-[2px] left-0 w-full lg:hidden z-10">
+
+    <div class="h-full flex items-center gap-2 md:gap-4 px-3 md:px-6">
+
+        <!-- Трек -->
+        <div class="flex items-center gap-3 w-auto lg:w-1/3 min-w-0 flex-1 lg:flex-none">
+            <div class="relative w-11 h-11 md:w-14 md:h-14 shrink-0 rounded-xl overflow-hidden bg-[#242424]">
+                <img id="playerCover" alt="" class="w-full h-full object-cover">
+            </div>
+            <div class="min-w-0 flex-1">
+                <p id="playerTitle" class="truncate text-sm font-semibold">Ничего не играет</p>
+                <p id="playerArtist" class="truncate text-xs text-white/40 mt-0.5">Выберите трек из списка</p>
+            </div>
+            <button id="playerLike" type="button" data-action="like" data-id="0" aria-label="Добавить в коллекцию"
+                    class="hidden sm:grid shrink-0 w-9 h-9 place-items-center rounded-full text-white/35 hover:text-accent hover:bg-white/5 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"></use></svg>
+            </button>
+        </div>
+
+        <!-- Управление -->
+        <div class="flex flex-col items-center justify-center gap-1 w-auto lg:w-1/3 shrink-0">
+            <div class="flex items-center gap-1 md:gap-2">
+                <button id="btnShuffle" type="button" data-action="shuffle" aria-label="Перемешать"
+                        class="hidden md:grid w-9 h-9 place-items-center rounded-full text-white/40 hover:text-white hover:bg-white/5 transition-colors control-btn">
+                    <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shuffle"></use></svg>
+                </button>
+                <button id="btnPrev" type="button" data-action="prev" aria-label="Предыдущий трек"
+                        class="w-9 h-9 md:w-10 md:h-10 grid place-items-center rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-prev"></use></svg>
+                </button>
+                <button id="btnPlay" type="button" data-action="toggle" aria-label="Воспроизвести"
+                        class="w-11 h-11 md:w-12 md:h-12 grid place-items-center rounded-full bg-accent text-black shadow-lg shadow-accent/20 hover:bg-accent-soft hover:scale-105 active:scale-95 transition-all">
+                    <svg id="iconPlay" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"></use></svg>
+                    <svg id="iconPause" class="hidden w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"></use></svg>
+                </button>
+                <button id="btnNext" type="button" data-action="next" aria-label="Следующий трек"
+                        class="w-9 h-9 md:w-10 md:h-10 grid place-items-center rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-next"></use></svg>
+                </button>
+                <button id="btnRepeat" type="button" data-action="repeat" aria-label="Повтор"
+                        class="hidden md:grid w-9 h-9 place-items-center rounded-full text-white/40 hover:text-white hover:bg-white/5 transition-colors control-btn">
+                    <svg id="repeatIcon" class="w-[18px] h-[18px]" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-repeat"></use></svg>
+                </button>
+            </div>
+
+            <!-- Прогресс (десктоп) -->
+            <div class="hidden lg:flex w-full max-w-md items-center gap-2.5 mt-0.5">
+                <span id="currentTime" class="w-10 text-right text-[11px] tabular-nums text-white/40">00:00</span>
+                <input id="progress" type="range" min="0" max="1" value="0" step="0.1" aria-label="Перемотка трека" class="range flex-1">
+                <span id="duration" class="w-10 text-[11px] tabular-nums text-white/40">00:00</span>
+            </div>
+        </div>
+
+        <!-- Текст песни и громкость -->
+        <div class="flex w-auto lg:w-1/3 justify-end items-center gap-2">
+            <button id="btnLyrics" type="button" data-action="lyrics" aria-label="Текст песни" aria-pressed="false"
+                    class="lyrics-btn w-9 h-9 grid place-items-center rounded-full text-white/50 hover:text-accent hover:bg-white/5 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mic"></use></svg>
+            </button>
+            <button id="btnMute" type="button" data-action="mute" aria-label="Выключить звук"
+                    class="hidden lg:grid w-9 h-9 place-items-center rounded-full text-white/50 hover:text-white hover:bg-white/5 transition-colors">
+                <svg id="volumeIcon" class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-volume"></use></svg>
+            </button>
+            <input id="volume" type="range" min="0" max="100" value="80" step="1" aria-label="Громкость" class="range hidden lg:block w-28">
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================================
+     Модальное окно «Скачать приложение» (PWA / APK / iOS)
+     ====================================================================== -->
+<div id="installModal" class="hidden fixed inset-0 z-[70] items-center justify-center p-4 sm:p-6"
+     role="dialog" aria-modal="true" aria-labelledby="installModalTitle">
+    <div id="installOverlay" class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-action="close-install"></div>
+    <div class="install-dialog relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#171717] shadow-2xl shadow-black/60">
+        <div class="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-[#3d3100] via-[#211d12] to-[#171717] px-6 py-6">
+            <div class="pointer-events-none absolute -right-10 -top-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl"></div>
+            <div class="relative flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 shrink-0 grid place-items-center rounded-2xl bg-gradient-to-br from-accent-soft to-[#ff9d00] text-black shadow-lg shadow-accent/20">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-download"></use></svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-accent">PWA · APK · iOS</p>
+                        <h2 id="installModalTitle" class="text-xl md:text-2xl font-black tracking-tight">Скачать приложение</h2>
+                    </div>
+                </div>
+                <button type="button" data-action="close-install" aria-label="Закрыть окно"
+                        class="w-9 h-9 grid place-items-center rounded-full text-white/45 hover:text-white hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"></use></svg>
+                </button>
+            </div>
+            <p class="relative mt-4 text-sm leading-relaxed text-white/55">
+                Мы определили устройство: <span id="installPlatform" class="font-bold text-accent">…</span>.
+                Выберите удобный способ — музыка будет всегда под рукой.
+            </p>
+        </div>
+
+        <div class="space-y-4 px-6 py-6">
+            <!-- 1. Прямая установка PWA в один клик -->
+            <section id="installDirectSection" class="hidden rounded-2xl border border-accent/35 bg-accent/[0.07] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="rounded-full bg-accent px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-black">Лучший способ</span>
+                    <span class="text-[11px] text-white/40">без магазина и APK</span>
+                </div>
+                <button id="installDirectBtn" type="button" data-action="install-pwa" class="install-primary w-full flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-sm md:text-base font-black">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-download"></use></svg>
+                    <span>Установить приложение прямо сейчас</span>
+                </button>
+                <p class="mt-3 text-[11px] leading-relaxed text-white/40">
+                    Браузер поставит приложение на главный экран телефона или в меню ПК —
+                    оно откроется без адресной строки, как обычная программа.
+                </p>
+            </section>
+
+            <!-- 2. APK для Android -->
+            <section id="installApkSection" class="hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-9 h-9 shrink-0 grid place-items-center rounded-xl bg-[#2b2b2b] text-sm font-black text-accent">A</div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-bold">Android · APK-файл</p>
+                        <p id="apkHint" class="mt-1 text-[11px] leading-relaxed text-white/40">Проверяем наличие сборки…</p>
+                    </div>
+                </div>
+                <a id="apkDownload" href="/static/MyMusic.apk" data-download-url="/download/app" data-action="download-apk"
+                   class="mt-4 w-full flex items-center justify-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-bold text-white hover:bg-white/10 hover:border-white/20 transition-colors">
+                    <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-download"></use></svg>
+                    <span>Скачать APK для Android</span>
+                </a>
+            </section>
+
+            <!-- 3. Инструкция для iPhone / iPad -->
+            <section id="installIosSection" class="hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-9 h-9 grid place-items-center rounded-xl bg-[#2b2b2b] text-sm font-black text-accent">iOS</div>
+                    <div>
+                        <p class="text-sm font-bold">iPhone и iPad</p>
+                        <p class="text-[11px] text-white/40">Safari поддерживает установку на главный экран</p>
+                    </div>
+                </div>
+                <ol class="space-y-2 text-[13px] text-white/70">
+                    <li class="flex items-start gap-3"><span class="w-5 h-5 shrink-0 grid place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">1</span> Откройте сайт в браузере Safari.</li>
+                    <li class="flex items-start gap-3"><span class="w-5 h-5 shrink-0 grid place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">2</span> Нажмите кнопку «Поделиться» (квадрат со стрелкой вверх).</li>
+                    <li class="flex items-start gap-3"><span class="w-5 h-5 shrink-0 grid place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">3</span> Выберите «На экран „Домой“» и нажмите «Добавить».</li>
+                </ol>
+            </section>
+
+            <!-- Подсказка для десктопа, если автопромпт браузера недоступен -->
+            <section id="installDesktopSection" class="hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p class="text-sm font-bold">Как установить на компьютер</p>
+                <p class="mt-2 text-[12px] leading-relaxed text-white/45">
+                    Нажмите значок установки в правой части адресной строки браузера
+                    (или откройте меню браузера → «Установить приложение»).
+                    После установки сервис откроется в отдельном окне без браузерной панели.
+                </p>
+            </section>
+
+            <!-- 4. Поделиться ссылкой -->
+            <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-accent" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-share"></use></svg>
+                    <p class="text-sm font-bold">Поделитесь музыкой</p>
+                </div>
+                <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                    <input id="shareUrl" type="text" readonly aria-label="Ссылка на сервис"
+                           class="min-w-0 flex-1 h-11 rounded-xl bg-[#0f0f0f] border border-white/10 px-3 text-xs text-white/60 focus:outline-none focus:border-accent/40">
+                    <button type="button" data-action="copy-link"
+                            class="shrink-0 h-11 flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 text-xs font-bold hover:bg-white/15 transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-share"></use></svg>
+                        Скопировать ссылку на сервис
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- Уведомления -->
+<div id="toasts" class="fixed top-20 right-4 z-50 flex flex-col items-end gap-2 w-[min(92vw,360px)] pointer-events-none"></div>
+
+<script type="module" src="/static/app.js"></script>
+<script>
+    // Регистрация Service Worker: кэширует только оболочку (/ и статика),
+    // API и аудиопотоки остаются сетевыми.
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .catch(() => { /* PWA — улучшение, приложение работает и без него */ });
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyc
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Локальные бинарники и сборки -----------------------------------------
+*.exe
+*.dll
+*.so
+*.apk
+*.bat
+start_public.bat.txt
+cloudflared-master/
+
+# --- База данных и временные файлы ----------------------------------------
+music.db*
+*.db-journal
+.env
+
+# --- Скачанные медиафайлы (папки оставляем в git через .gitkeep) -----------
+storage/tracks/*
+storage/covers/*
+!storage/tracks/.gitkeep
+!storage/covers/.gitkeep
+
+# --- Логи, кэши, IDE -------------------------------------------------------
+*.log
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+.idea/
+.vscode/
